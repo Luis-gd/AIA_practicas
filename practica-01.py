@@ -11,52 +11,52 @@
 import random, copy
 
 # ===================================================================
-# Representación de problemas de satisfacción de restricciones
+# RepresentaciÃ³n de problemas de satisfacciÃ³n de restricciones
 # ===================================================================
 
-#   Definimos la clase PSR que servirá para representar problemas de
-# satisfacción de restricciones.
+#   Definimos la clase PSR que servirÃ¡ para representar problemas de
+# satisfacciÃ³n de restricciones.
 
 # La clase tiene cuatro atributos:
 # - variables: una lista con las variables del problema.
 # - dominios: un diccionario que asocia a cada variable su dominio,
 #      una lista con los valores posibles.
 # - restricciones: un diccionario que asigna a cada tupla de
-#      variables la restricción que relaciona a esas variables.
+#      variables la restricciÃ³n que relaciona a esas variables.
 # - vecinos: un diccionario que asigna a cada variables una lista con
-#      las variables con las que tiene una restricción asociada.
+#      las variables con las que tiene una restricciÃ³n asociada.
 
 # El constructor de la clase recibe los valores de los atributos
 # "dominios" y "restricciones". Los otros dos atributos se definen a
-# partir de éstos valores.
+# partir de Ã©stos valores.
 
 # NOTA IMPORTANTE: Supondremos en adelante que todas las
-# restricciones son binarias y que existe a lo sumo una restricción
+# restricciones son binarias y que existe a lo sumo una restricciÃ³n
 # por cada par de variables.
 
 class PSR:
-    """Clase que describe un problema de satisfacción de
+    """Clase que describe un problema de satisfacciÃ³n de
     restricciones, con los siguientes atributos:
        variables     Lista de las variables del problema
        dominios      Diccionario que asigna a cada variable su dominio
                      (una lista con los valores posibles)
        restricciones Diccionario que asocia a cada tupla de variables
-                     involucrada en una restricción, una función que,
+                     involucrada en una restricciÃ³n, una funciÃ³n que,
                      dados valores de los dominios de esas variables,
-                     determina si cumplen o no la restricción.
-                     IMPORTANTE: Supondremos que para cada combinación
-                     de variables hay a lo sumo una restricción (por
+                     determina si cumplen o no la restricciÃ³n.
+                     IMPORTANTE: Supondremos que para cada combinaciÃ³n
+                     de variables hay a lo sumo una restricciÃ³n (por
                      ejemplo, si hubiera dos restricciones binarias
-                     sobre el mismo par de variables, consideraríamos
-                     la conjunción de ambas). 
-                     También supondremos que todas las restricciones
+                     sobre el mismo par de variables, considerarÃ­amos
+                     la conjunciÃ³n de ambas). 
+                     TambiÃ©n supondremos que todas las restricciones
                      son binarias
         vecinos      Diccionario que representa el grafo del PSR,
                      asociando a cada variable, una lista de las
-                     variables con las que comparte restricción.
+                     variables con las que comparte restricciÃ³n.
 
     El constructor recibe los valores de los atributos dominios y
-    restricciones; los otros dos atributos serán calculados al
+    restricciones; los otros dos atributos serÃ¡n calculados al
     construir la instancia."""
 
     def __init__(self, dominios, restricciones):
@@ -76,8 +76,8 @@ class PSR:
 # Ejercicio 1
 # ===================================================================
 
-#   Definir una función n_reinas(n), que recibiendo como entrada un
-# número natural n, devuelva una instancia de la clase PSR,
+#   Definir una funciÃ³n n_reinas(n), que recibiendo como entrada un
+# nÃºmero natural n, devuelva una instancia de la clase PSR,
 # correspondiente al problema de las n-reinas.
 
 # Ejemplos:
@@ -101,38 +101,52 @@ class PSR:
 # >>> psr_n4.restricciones[(1,4)](4,1)
 # False
 
-def n_reinas(n):
-	
-	def n_reinas_restr(x,y):
-		return=(lambda vx,vy: vx != vy and
-					abs(x-y) != abs(vx-vy) ) 
-	
-	doms = {i+1 :[range(1,n+1)] for i in range(n)}
-	restrs = dict()
-	for x in range(1,n):
-		for y un range(x+1,n+1):
-			restrs[(x,y)]=n_reinas_restr(x,y) 
-	return PSR(doms,restrs)
+def n_reinas_restr(x,y):
+    	return(lambda vx,vy: vx != vy and
+    			abs(x-y) != abs(vx-vy) ) 
+
+def n_reinas(n):	
+    doms = {i+1 :[range(1,n+1)] for i in range(n)}
+    restrs = dict()
+    for x in range(1,n):
+        for y in range(x+1,n+1):
+            restrs[(x,y)]=n_reinas_restr(x,y) 
+    return PSR(doms,restrs)
 
 
+provincias= {"Huelva":["Sevilla", "CÃ¡diz"],
+        "Sevilla":["Huelva", "CÃ¡diz", "CÃ³rdoba", "MÃ¡laga"],
+        "CÃ³rdoba":["Sevilla","MÃ¡laga","Granada","JaÃ©n"],
+        "JaÃ©n":["CÃ³rdoba","Granada"],
+        "AlmerÃ­a":["Granada"],
+        "Granada":["AlmerÃ­a","JaÃ©n","CÃ³rdoba","MÃ¡laga"],
+        "MÃ¡laga":["Granada","CÃ³rdoba","Sevilla","CÃ¡diz"],
+        "CÃ¡diz":["MÃ¡laga","Sevilla","Huelva"]}
+colores = ["azul", "rojo", "verde"]
+def coloreado_mapa(provincias, colores):
+    dom = {i:j for i in list(provincias) for j in colores}
+    rest = dict()
+    for i in list(provincias):
+        for j in provincias[i]:
+            rest[(i,j)] = i != j
+    return PSR(dom,rest)
 
+mapa = coloreado_mapa(provincias,colores)
 
-
-
-
-
+print(mapa)
+    
 
 # ===================================================================
 # Parte II: Algoritmo de consistencia de arcos AC3
 # ===================================================================
 
 #   En esta parte vamos a definir el algoritmo de consistencia de arcos
-# AC3 que, dado un problema de satisfacción de restricciones,
-# devuelve una representación equivalente que cumple la propiedad de
-# ser arco consistente (y que usualmente tiene dominios más
+# AC3 que, dado un problema de satisfacciÃ³n de restricciones,
+# devuelve una representaciÃ³n equivalente que cumple la propiedad de
+# ser arco consistente (y que usualmente tiene dominios mÃ¡s
 # reducidos.)
 
-#   Dado un PSR, un arco es una restricción cualquiera del problema,
+#   Dado un PSR, un arco es una restricciÃ³n cualquiera del problema,
 # asociada con una de las variables implicadas en la misma, a la que
 # llamaremos variable distinguida.
 
@@ -144,11 +158,11 @@ def n_reinas(n):
 # Ejercicio 2
 # ===================================================================
 
-#   Definir una función restriccion_arco que, dado un PSR, la
+#   Definir una funciÃ³n restriccion_arco que, dado un PSR, la
 # variable distinguida de un arco y la variable asociada; devuelva
-# una función que, dado un elemento del dominio de la variable
+# una funciÃ³n que, dado un elemento del dominio de la variable
 # distinguida y otro de la variable asociada, determine si verifican
-# la restricción asociada al arco.
+# la restricciÃ³n asociada al arco.
 
 # Ejemplos:
 
@@ -170,10 +184,10 @@ def n_reinas(n):
 # Ejercicio 3
 # ===================================================================
 
-#   Definir un método arcos para la clase PSR que construya un
+#   Definir un mÃ©todo arcos para la clase PSR que construya un
 # conjunto con todos los arcos asociados al conjunto de restricciones
 # del problema. Utilizaremos las tuplas para representar a los
-# arcos. El primer elemento será la variable distinguida y el segundo
+# arcos. El primer elemento serÃ¡ la variable distinguida y el segundo
 # la variable asociada.
 
 # Ejemplo:
@@ -200,13 +214,13 @@ def n_reinas(n):
 # Ejercicio 4
 # ===================================================================
 
-#   Definir la función AC3(psr,doms) que, recibiendo como entrada una
+#   Definir la funciÃ³n AC3(psr,doms) que, recibiendo como entrada una
 # instancia de la clase PSR y diccionario doms que a cada variable
 # del problema le asigna un dominio, aplica el algoritmo de
 # consistencia de arcos AC3 a los dominios recibidos (ver tema 1).
 
-# NOTA: La función AC3 debe actualizar los dominios de forma
-# destructiva (es decir, después de ejecutar la llamada "AC3(psr,
+# NOTA: La funciÃ³n AC3 debe actualizar los dominios de forma
+# destructiva (es decir, despuÃ©s de ejecutar la llamada "AC3(psr,
 # doms)", en el diccionario doms debe quedar actualizados.
 
 # Ejemplos:
@@ -234,7 +248,7 @@ def n_reinas(n):
 
 
 # ===================================================================
-# Parte III: Algoritmo de búsqueda AC3
+# Parte III: Algoritmo de bÃºsqueda AC3
 # ===================================================================
 
 
@@ -243,16 +257,16 @@ def n_reinas(n):
 # ===================================================================
 
 
-# Definir una función parte_dominio(doms), que a partir de un diccionario doms
+# Definir una funciÃ³n parte_dominio(doms), que a partir de un diccionario doms
 # en el que cada variable del problema tiene asignado un dominio de posibles
 # valores (como los que obtiene el algoritmo AC-3 anterior), devuelve dos
 # diccionarios obtenidos partiendo en dos el primero de los dominios que no
 # sea unitario.   
 
 # Nota: Supondremos que el diccionario doms que se recibe no tiene dominios
-# vacíos y que al menos uno de los dominios no es unitario. El método para
-# partir en dos el dominio se deja a libre elección (basta con que sea una
-# partición en dos). 
+# vacÃ­os y que al menos uno de los dominios no es unitario. El mÃ©todo para
+# partir en dos el dominio se deja a libre elecciÃ³n (basta con que sea una
+# particiÃ³n en dos). 
 
 # Ejemplo:
 
@@ -270,8 +284,8 @@ def n_reinas(n):
 # Ejercicio 6
 # ===================================================================
 
-# Definir la función búsqueda_AC3(psr), que recibiendo como entrada un psr
-# (tal y como se define en el ejercicio 1), aplica el algoritmo de búsqueda
+# Definir la funciÃ³n bÃºsqueda_AC3(psr), que recibiendo como entrada un psr
+# (tal y como se define en el ejercicio 1), aplica el algoritmo de bÃºsqueda
 # AC-3 tal y como se define en el tema 2
 
 # Ejemplos:
@@ -281,7 +295,7 @@ def n_reinas(n):
 # {1: 3, 2: 1, 3: 4, 4: 2}
 # >>> psr_nreinas3=n_reinas(3)
 # >>> busqueda_AC3(psr_nreinas3)
-# No hay solución
+# No hay soluciÃ³n
 
 
 
@@ -294,10 +308,10 @@ def n_reinas(n):
 
 
 
-#   En este ejercicio no se pide ninguna función. Tan sólo comprobar el
+#   En este ejercicio no se pide ninguna funciÃ³n. Tan sÃ³lo comprobar el
 # algoritmo resolviendo diversas instancias del problema de las 
-# n_reinas. Para visualizar las soluciones, puede ser útil la siguiente
-# función:
+# n_reinas. Para visualizar las soluciones, puede ser Ãºtil la siguiente
+# funciÃ³n:
 
 def dibuja_tablero_n_reinas(asig):
 
