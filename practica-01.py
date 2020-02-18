@@ -124,11 +124,12 @@ provincias= {"Huelva":["Sevilla", "Cádiz"],
         "Cádiz":["Málaga","Sevilla","Huelva"]}
 colores = ["azul", "rojo", "verde"]
 def coloreado_mapa(provincias, colores):
-    dom = {i:j for i in list(provincias) for j in colores}
+    dom = {i:colores for i in provincias}
     rest = dict()
-    for i in list(provincias):
+    for i in provincias:
         for j in provincias[i]:
-            rest[(i,j)] = i != j
+            if  (i,j) not in rest:
+                rest[(i,j)] = (lamda u,v: u != v)
     return PSR(dom,rest)
 
 mapa = coloreado_mapa(provincias,colores)
