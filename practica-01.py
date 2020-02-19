@@ -123,18 +123,70 @@ provincias= {"Huelva":["Sevilla", "Cádiz"],
         "Málaga":["Granada","Córdoba","Sevilla","Cádiz"],
         "Cádiz":["Málaga","Sevilla","Huelva"]}
 colores = ["azul", "rojo", "verde"]
+
 def coloreado_mapa(provincias, colores):
     dom = {i:colores for i in provincias}
     rest = dict()
     for i in provincias:
         for j in provincias[i]:
             if  (i,j) not in rest:
-                rest[(i,j)] = (lamda u,v: u != v)
+                rest[(i,j)] = (lambda j,l: j != l)
     return PSR(dom,rest)
 
-mapa = coloreado_mapa(provincias,colores)
 
-print(mapa)
+
+def es_estado_final(estado,problema):
+    sol = False
+    if len(list(estado)) == len(problema.variables):
+        sol = True
+    return sol
+
+def profundidad(problema):
+    var = problema.variables
+    sol = []
+    final = False
+    abiertos = [{}]
+    cerrados = []
+    while(abiertos != [] and not final):
+        actual = abiertos[0]
+        abiertos = abiertos[1:]
+        cerrados.append(actual)
+        if es_estado_final(actual,problema):
+            sol = actual
+            final = True
+        else: 
+            if actual == {}:    
+                dom = problema.dominios
+                nuevos_sucesores = [{var[0]:i}for i in dom[var[0]]]
+                var = var[1:]
+            else:
+                nuevos_sucesores = []
+                ac_aux = actual.copy()
+                for x in ac_aux:
+                    aspirante = var[0]
+                    if (x,aspirante) in problema.vecinos:
+                        for v in problema.dominios[aspirante]:
+                            if problema.restricciones[(x,aspirante)](actual[x],v):
+                                print(v)
+                                actual[aspirante] = v
+                                nuevos_sucesores.append(actual)
+                    elif (aspirante,x) in problema.vecinos:
+                        for v in problema.dominios[aspirante]:
+                            if problema.restricciones[(aspirante,x)](v,actual[x]):
+                                print(v)
+                                actual[aspirante] = v
+                                nevos_sucesores.append(actual)
+                    else:
+                        for v in problema.dominios[aspirante]:
+                            print(v)
+                            actual[aspirante] = v
+                            nuevos_sucesores.append(actual)
+                    var = var[1:]
+            abiertos = nuevos_sucesores + abiertos
+    return sol
+mapa = coloreado_mapa(provincias,colores)
+reinas = n_reinas(4)
+print(profundidad(reinas))
     
 
 # ===================================================================
