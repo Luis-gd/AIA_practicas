@@ -135,58 +135,42 @@ def coloreado_mapa(provincias, colores):
 
 
 
-def es_estado_final(estado,problema):
-    sol = False
-    if len(list(estado)) == len(problema.variables):
-        sol = True
-    return sol
 
-def profundidad(problema):
-    var = problema.variables
-    sol = []
-    final = False
-    abiertos = [{}]
-    cerrados = []
-    while(abiertos != [] and not final):
-        actual = abiertos[0]
-        abiertos = abiertos[1:]
-        cerrados.append(actual)
-        if es_estado_final(actual,problema):
-            sol = actual
-            final = True
-        else: 
-            if actual == {}:    
-                dom = problema.dominios
-                nuevos_sucesores = [{var[0]:i}for i in dom[var[0]]]
-                var = var[1:]
-            else:
-                nuevos_sucesores = []
-                ac_aux = actual.copy()
-                for x in ac_aux:
-                    aspirante = var[0]
-                    if (x,aspirante) in problema.vecinos:
-                        for v in problema.dominios[aspirante]:
-                            if problema.restricciones[(x,aspirante)](actual[x],v):
-                                print(v)
-                                actual[aspirante] = v
-                                nuevos_sucesores.append(actual)
-                    elif (aspirante,x) in problema.vecinos:
-                        for v in problema.dominios[aspirante]:
-                            if problema.restricciones[(aspirante,x)](v,actual[x]):
-                                print(v)
-                                actual[aspirante] = v
-                                nevos_sucesores.append(actual)
-                    else:
-                        for v in problema.dominios[aspirante]:
-                            print(v)
-                            actual[aspirante] = v
-                            nuevos_sucesores.append(actual)
-                    var = var[1:]
-            abiertos = nuevos_sucesores + abiertos
-    return sol
+
+def psr_backtraking(psr):
+    
+    def consistente(var,val,asig):
+        for x in asig:
+            if (var,x) in psr.restricciones:
+                if not psr.restricciones[(var,x)](val,asig[x]):
+                    return False
+            elif (x,var) in psr.restricciones:
+                if not psr.restricciones[(x,var)](val,asig[x]):
+                    return False
+        return True
+
+            
+    def psr_backtracking_rec(asig,resto):
+        if resto == []:
+            return asig
+        else:
+            var = resto[0]
+            nuevo_resto = resto[1:]
+            dom_var = psr.dominios[var]
+            for val in dom_var:
+                if consistente(var,val,asig):
+                    asig[var] = val
+                    result = psr_backtracking_rec(asig,nuevo_resto) 
+                    if result:
+                        return result
+                    del asig[var]
+            return None
+                    
+    return psr_backtracking_rec(dict(),psr.variables)
+
 mapa = coloreado_mapa(provincias,colores)
 reinas = n_reinas(4)
-print(profundidad(reinas))
+print((psr_backtraking(mapa)))
     
 
 # ===================================================================
