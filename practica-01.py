@@ -133,10 +133,6 @@ def coloreado_mapa(provincias, colores):
                 rest[(i,j)] = (lambda j,l: j != l)
     return PSR(dom,rest)
 
-
-
-
-
 def psr_backtraking(psr):
     
     def consistente(var,val,asig):
@@ -153,9 +149,13 @@ def psr_backtraking(psr):
     def psr_backtracking_rec(asig,resto):
         if resto == []:
             return asig
-        else:
+        else: 
             var = resto[0]
-            nuevo_resto = resto[1:]
+            for v in resto:
+                if len(psr.dominios[var]) > len(psr.dominios[v]):
+                    var = v
+            nuevo_resto = resto.copy()
+            nuevo_resto.pop(nuevo_resto.index(var))
             dom_var = psr.dominios[var]
             for val in dom_var:
                 if consistente(var,val,asig):
