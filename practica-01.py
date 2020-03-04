@@ -101,19 +101,18 @@ class PSR:
 # >>> psr_n4.restricciones[(1,4)](4,1)
 # False
 
-def n_reinas_restr(x,y):
-    	return(lambda vx,vy: vx != vy and
-    			abs(x-y) != abs(vx-vy) ) 
-
-def n_reinas(n):	
-    doms = {i+1 :[range(1,n+1)] for i in range(n)}
+def n_reinas(n):
+    def n_reinas_restr(x,y):
+        return lambda vx,vy: vx!=vy and abs(x-y)!=abs(vx-vy)
+    doms = dict()
     restrs = dict()
-    for x in range(1,n):
-        for y in range(x+1,n+1):
-            restrs[(x,y)]=n_reinas_restr(x,y) 
-    return PSR(doms,restrs)
-
-
+    for i in range(n+1):
+        if i!=0:
+            doms[i] = [i for i in range(n+1) if i!=0]
+    for x in range(1, n):
+        for y in range(x+1, n+1):
+            restrs[(x,y)] = n_reinas_restr(x,y)
+    return PSR(doms, restrs)
 provincias= {"Huelva":["Sevilla", "Cádiz"],
         "Sevilla":["Huelva", "Cádiz", "Córdoba", "Málaga"],
         "Córdoba":["Sevilla","Málaga","Granada","Jaén"],
@@ -170,8 +169,58 @@ def psr_backtraking(psr):
 
 mapa = coloreado_mapa(provincias,colores)
 reinas = n_reinas(4)
-print((psr_backtraking(mapa)))
+print((psr_backtraking(n_reinas(4))))
     
+def psr_backtraking_fc_mrv(psr):
+
+    def forward_checking(psr, var, val, doms):
+    
+        doms_consistente = {}
+
+        for k in doms:  # Para cada variable no asignada y su D
+            if (var, k) in psr.restricciones:
+                doms_consistente[k] = [v for v in doms[k] if
+                                       psr.restricciones[(var, k)](val, v)]
+            elif (k, var) in psr.restricciones:
+                doms_consistente[k] = [v for v in doms[k] if
+                                       psr.restricciones[(k, var)](v, val)]
+            else:
+                doms_consistente[k] = doms[k][:]
+
+        return doms_consistente
+    def mrv(doms):
+        return min(doms,key=lambda v: len(doms[v]))       
+    
+    def algun_dominio_vacio(doms):
+        return any((not d for d in doms.values()))    
+
+    def psr_backtracking_fc_mrv_rec(asig,resto):
+        if not doms:
+            return asig
+        elif algun_dominio_vacio(doms):
+            return None
+        else: 
+            var = mrv(doms)
+            dom_var = doms[var]
+            del doms[var]
+            for val in dom_var:
+                asig[var] = val
+                doms_fc = forward_checking(psr,var,val,doms)
+                result = psr_backtracking_fc_mrv_rec(asig,doms_fc)
+                if result is not None:
+                    return result
+            del asig[var]
+            return None
+                   
+    return psr_backtracking_fc_mrv_rec(dict(),
+icopy.deepcopy(psr.dominios))
+
+mapa = coloreado_mapa(provincias,colores)
+reinas = n_reinas(4)
+#print((psr_backtraking(n_reinas(48))))
+ 
+
+
 
 # ===================================================================
 # Parte II: Algoritmo de consistencia de arcos AC3
@@ -212,8 +261,18 @@ print((psr_backtraking(mapa)))
 # False
 
 
+def restriccion_arco(psr,x,y):
 
 
+#Devuelve la funcion de la restriccion para la pareja en cuestion
+#en ese caso
+
+    if (x,y) in list(psr.restricciones):
+        sol = psr.restricciones[(x,y)]    
+    else:
+        sol = lambda u,v :psr.restricciones[(y,x)](v,u)
+
+    return sol
 
 
        
@@ -240,7 +299,8 @@ print((psr_backtraking(mapa)))
 # False
 
 
-
+def arcos(psr):
+    return {(x,y) for x in psr.variables for y in psr.vecinos[x]}
 
 
 
@@ -278,10 +338,24 @@ print((psr_backtraking(mapa)))
 # >>> dominios
 # {1: [2], 2: [4], 3: [1], 4: [3]}
 
+def AC3(psr,doms):
+    cola = arcos(psr)     
+    while cola:
+        (x,y) = cola.pop()
+        func = restriccion_arco(psr,x,y)
+        elimina = [] 
+        for vx in doms[x]:
+            if not any(func(vx,vy) for vy in doms[y]):
+                elimina.append(vx)
+        for e in elimina:
+            doms[x].remove(e)
+            conj = {(z,x) for z in psr.vecinos[x] if z != y} 
+            cola.update(conj) 
 
-
-
-
+    return doms
+psr_n4=n_reinas(4)
+dominios = {1:[2,4],2:[1,2,3,4],3:[1,2,3,4],4:[1,2,3,4]}
+print(AC3(psr_n4, dominios))
 
 
 # ===================================================================
