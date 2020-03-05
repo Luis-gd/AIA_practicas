@@ -354,8 +354,8 @@ def AC3(psr,doms):
 
     return doms
 psr_n4=n_reinas(4)
-dominios = {1:[2,4],2:[1,2,3,4],3:[1,2,3,4],4:[1,2,3,4]}
-dominios = {1:[1,2,3,4],2:[3,4],3:[1,4],4:[1,2,3,4]}
+dominios = {1:[1,2],2:[1,2,3,4],3:[1,2,3,4],4:[1,2,3,4]}
+#dominios = {1:[1,2,3,4],2:[3,4],3:[1,4],4:[1,2,3,4]}
 #print(AC3(psr_n4, dominios))
 
 
@@ -388,19 +388,18 @@ dominios = {1:[1,2,3,4],2:[3,4],3:[1,4],4:[1,2,3,4]}
 
 
 def parte_dominios(doms):
+    aux1 = doms.copy()
+    aux2 = doms.copy()
     for x in doms:
         if len(doms[x]) > 1:
-            aux1 = doms.copy()
-            aux1[x] = doms[x][0:int(len(doms[x])/2)]
-            aux2 = doms.copy()
-            aux2[x] = doms[x][int(len(doms[x])/2):len(doms[x])]
-            sol = (aux1,aux2)
-            break
-    return tuple(sol) 
+            aux1[x] = [aux1[x][0]] 
+            aux2[x] = aux2[x][1:]           
+            return aux1,aux2 
 
 doms4_1={1: [2, 4], 2: [1, 4], 3: [1, 3], 4: [1, 3, 4]}
 #print(parte_dominios(doms4_1))
-
+#print(parte_dominios(parte_dominios(doms4_1)[0]))
+#print(parte_dominios(doms4_1)[1])
 # ({1: [2], 2: [1, 4], 3: [1, 3], 4: [1, 3, 4]}, {1: [4], 2: [1, 4], 3: [1, 3], 4: [1, 3, 4]})
     
 
@@ -424,23 +423,27 @@ doms4_1={1: [2, 4], 2: [1, 4], 3: [1, 3], 4: [1, 3, 4]}
 # >>> busqueda_AC3(psr_nreinas3)
 # No hay solución
 
-def busqueda_AC3(psr):
-    doms = psr.dominios.copy()
-    abiertos = [doms]
-    actual = abiertos[0]
-    while(abiertos != []):
-        r = AC3(psr,actual)
-        if any(len(r[x]) == 0 for x in r):
-            return "Sorry, has pifiao"
-        elif all(len(r[x]) == 1 for x in r):
-            return "Ya tienes solución chato y esta es: " + r
-        else:
-            s = parte_dominios(doms)
-            abiertos.append(s[0])
-            abiertos.append(s[1])
-            del abiertos[0]
-    return "Sorry, has pifiao"
-psr_nreinas4=n_reinas(4)
+def todos_dominios_unitarios(doms):
+    return all(len(d) == 1 for d in doms.values())
+
+def ningun_dominio_vacio(doms):
+    return  all(doms.values())
+
+def busqueda_AC3(psr): 
+    abiertos = [psr.dominios.copy()]
+    while abiertos:
+        actual = abiertos.pop()
+        AC3(psr,actual)
+        if ningun_dominio_vacio(actual):
+            if todos_dominios_unitarios(actual):
+                return {var:dom[0] 
+                        for var,dom in actual.items()}
+            else: 
+                abiertos.extend(parte_dominios(actual))
+    else:
+        print("Sorry has pifiao")
+
+psr_nreinas4=n_reinas(24)
 print(busqueda_AC3(psr_nreinas4))
 
 
