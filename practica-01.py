@@ -191,8 +191,6 @@ def psr_backtraking_fc_mrv(psr):
     def mrv(doms):
         return min(doms,key=lambda v: len(doms[v]))       
     
-    def algun_dominio_vacio(doms):
-        return any((not d for d in doms.values()))    
 
     def psr_backtracking_fc_mrv_rec(asig,resto):
         if not doms:
@@ -426,24 +424,32 @@ doms4_1={1: [2, 4], 2: [1, 4], 3: [1, 3], 4: [1, 3, 4]}
 def todos_dominios_unitarios(doms):
     return all(len(d) == 1 for d in doms.values())
 
+def algun_dominio_vacio(doms):
+    return any((not d for d in doms.values()))    
+
+
 def ningun_dominio_vacio(doms):
-    return  all(doms.values())
+    return not algun_dominio_vacio(doms)
 
 def busqueda_AC3(psr): 
     abiertos = [psr.dominios.copy()]
     while abiertos:
         actual = abiertos.pop()
         AC3(psr,actual)
+        #print(actual)
         if ningun_dominio_vacio(actual):
             if todos_dominios_unitarios(actual):
                 return {var:dom[0] 
                         for var,dom in actual.items()}
             else: 
                 abiertos.extend(parte_dominios(actual))
+                print(abiertos)
     else:
         print("Sorry has pifiao")
 
-psr_nreinas4=n_reinas(24)
+print('hola')
+psr_nreinas4=n_reinas(4)
+print(AC3(psr_nreinas4,{1: [1], 2: [1, 2, 3, 4], 3: [1, 2, 3, 4], 4: [1, 2, 3, 4]}))
 print(busqueda_AC3(psr_nreinas4))
 
 
