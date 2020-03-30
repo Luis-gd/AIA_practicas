@@ -14,7 +14,7 @@
 # APELLIDOS: Galocha Domínguez
 # -----------------------------------------------------------
 
-
+import random
 
 # Escribir el código Python de las funciones que se piden en el
 # espacio que se indica en cada ejercicio.
@@ -241,10 +241,36 @@ print(viterbi(ej2_hmm,["u","u","no u"]))
 
 
 
+def  muestreo_hmm(modelo, n):
+    sol = [[]]
+    r = random.random()
+    ac = 0
+    for i in modelo.estados:
+        ac = ac + modelo.pi[i]
+        if r < ac:
+            sol =  [[i],[]]
+            break
+    for e in range(n):
+        r = random.random()
+        ac = 0
+        for o in modelo.observables:
+            ac = ac + modelo.b[(sol[0][e],o)]
+            if r < ac:
+                sol[1] = sol[1] + [o]
+                break
+        if len(sol[1]) == n:
+            break
+        r = random.random()
+        ac = 0
+        for es in modelo.estados:
+            ac = ac + modelo.a[(sol[0][e],es)]
+            if r < ac:
+                sol[0] = sol[0] + [es]
+                break
+    return sol
 
 
-
-
+print(muestreo_hmm(ej1_hmm,10))
 
 
 
