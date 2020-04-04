@@ -15,6 +15,7 @@
 # -----------------------------------------------------------
 
 import random
+import math
 
 # Escribir el código Python de las funciones que se piden en el
 # espacio que se indica en cada ejercicio.
@@ -149,22 +150,29 @@ def viterbi_pre(hmm,observaciones):
 
 
 def viterbi(modelo, observaciones):
-    primera = [[(modelo.b[(i, observaciones[0])] * modelo.pi[i], None) for i in modelo.estados]]
-    siguientes = primera
-    for k in range(1, len(observaciones)):
-        intermedio = []
+    probabilidades = [[modelo.b[(i, observaciones[0])] * modelo.pi[i] for i in modelo.estados]]
+    estados = [[None for i in modelo.estados]]
+    for o in observaciones[1:]:
+        probs_o = []
+        est_o = []
         for j in modelo.estados:
-               
-            (p, e) =  max([(modelo.a[(i,j)] * siguientes[k-1][z][0], i) 
-                for (i,z) in zip(modelo.estados, range(len(modelo.estados)))])
-            intermedio = intermedio + [(modelo.b[(j, observaciones[k])] * p, e)]
-        siguientes = siguientes + [intermedio]
-        r = [max(siguientes[i])[1] for i in range(len(siguientes))][1:] 
-        r.append(modelo.estados[siguientes[-1].index(max(siguientes[-1]))])
-    return r
-    
+            (v, pr) = max([(modelo.a[i, j] * 
+                probabilidades[observaciones.index(o) - 1][modelo.estados.index(i)], i ) for i in modelo.estados])
+            probs_o.append(modelo.b[j,o] * v)
+            est_o.append(pr)
+        probabilidades.append(probs_o)
+        estados.append(est_o)
+    solucion = [modelo.estados[probabilidades[-1].index(max(probabilidades[-1]))]]
+    i = len(observaciones) - 1
+    while i > 0:
+        elemento = estados[i][modelo.estados.index(solucion[0])]
+        solucion.insert(0,elemento)
+        i = i - 1
+    return solucion 
 
 
+
+#print(ej2_hmm.a)
 print(viterbi(ej2_hmm,["u","u","no u"]))
 
 
@@ -270,7 +278,7 @@ def  muestreo_hmm(modelo, n):
     return sol
 
 
-print(muestreo_hmm(ej1_hmm,10))
+#print(muestreo_hmm(ej1_hmm,10))
 
 
 
@@ -411,6 +419,37 @@ cuadr0=["ooo",
 
 # -----------
 
+class Robot(HMM):
+    def __init__(self, cuadrante, error):
+        def observacion_real(estado):
+            return [0 if (estado[0] + i, estado[1]) in validos(estado[0], estado[1]) else 1  
+            for i in [1, -1]] + [0 if (estado[0], estado[1] + i) in validos(estado[0], estado[1]) else 1  
+            for i in [1, -1]]
+
+
+        def validos(x,y):
+            s = [(x + j, y ) for j in [1, -1] 
+                    if x + j >= 0 and  x + j< len(cuadrante) and cuadrante[x + j][y] != "x"] 
+            s = s + [(x, y + i) for i in [1, -1]
+                    if y + i < len(cuadrante[0]) and y + i >= 0 and cuadrante[x][y + i] != "x"] 
+            return s
+
+    
+        estados = [(i,j) for i in range(len(cuadrante)) 
+                for j in range(len(cuadrante[i])) if cuadrante[i][j] != "x"]
+        observables = [(int(bin(i + 16)[3]), int(bin(i + 16)[4]),int(bin(i + 16)[5]),int(bin(i + 16)[6])) 
+                for i in range(16)]
+        mat_ini = [1/len(estados) for _ in range(len(estados))]
+        mat_trans = [[1/len(validos(estadoi[0],estadoi[1]))
+            if estadoj in validos(estadoi[0], estadoi[1]) else 0 
+            for estadoj in estados]
+            for estadoi in estados]
+        mat_obs = [[error ** len([0 for (i,j) in zip(observacion_real(estado),observable) if i != j]) 
+            * (1-error) ** len([0 for (i,j) in zip(observacion_real(estado),observable) if i == j]) 
+            for observable in observables] 
+            for estado in estados]
+        HMM.__init__(self, estados, mat_ini, mat_trans, observables, mat_obs)
+        
 # Ejemplo de uso de Viterbi en la cuadrícula del ejemplo
 
 cuadr_rn=     ["ooooxoooooxoooxo",
@@ -429,8 +468,7 @@ seq_rn1=[(1, 1, 0, 0), (0, 1, 0, 0), (0, 1, 0, 1), (0, 1, 0, 1),
 # >>> viterbi(robot_rn,seq_rn1)
 # [(3, 14), (3, 13), (3, 12), (3, 13), (3, 14), (3, 15), (3, 14)]
 
-
-
+print(viterbi(robot_rn, seq_rn1))   
 
 
 
