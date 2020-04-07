@@ -15,7 +15,7 @@
 # -----------------------------------------------------------
 
 import random
-import math
+
 
 # Escribir el código Python de las funciones que se piden en el
 # espacio que se indica en cada ejercicio.
@@ -150,24 +150,25 @@ def viterbi_pre(hmm,observaciones):
 
 
 def viterbi(modelo, observaciones):
-    probabilidades = [[modelo.b[(i, observaciones[0])] * modelo.pi[i] for i in modelo.estados]]
-    estados = [[None for i in modelo.estados]]
+    nu_list = [modelo.b[(i, observaciones[0])] * modelo.pi[i] for i in modelo.estados]
+    anteriores = [[None for i in modelo.estados]]
     for o in observaciones[1:]:
-        probs_o = []
-        est_o = []
+        nu = []
+        antr = []
         for j in modelo.estados:
-            (v, pr) = max([(modelo.a[i, j] * 
-                probabilidades[observaciones.index(o) - 1][modelo.estados.index(i)], i ) for i in modelo.estados])
-            probs_o.append(modelo.b[j,o] * v)
-            est_o.append(pr)
-        probabilidades.append(probs_o)
-        estados.append(est_o)
-    solucion = [modelo.estados[probabilidades[-1].index(max(probabilidades[-1]))]]
+            (v, pr) = max([(modelo.a[i, j] * p, modelo.estados.index(i))
+                           for i, p in zip(modelo.estados, nu_list)])
+            nu.append(modelo.b[j,o] * v)
+            antr.append(pr)
+        nu_list = nu
+        anteriores.append(antr)         
+    indices = [nu_list.index(max(nu_list))]
     i = len(observaciones) - 1
     while i > 0:
-        elemento = estados[i][modelo.estados.index(solucion[0])]
-        solucion.insert(0,elemento)
+        elemento = anteriores[i][indices[0]]
+        indices.insert(0,elemento)
         i = i - 1
+    solucion = [modelo.estados[i] for i in indices]
     return solucion 
 
 
@@ -249,8 +250,7 @@ print(viterbi(ej2_hmm,["u","u","no u"]))
 
 
 
-def  muestreo_hmm(modelo, n):
-    sol = [[]]
+def  muestreo_hmm(modelo, n): 
     r = random.random()
     ac = 0
     for i in modelo.estados:
@@ -262,7 +262,10 @@ def  muestreo_hmm(modelo, n):
         r = random.random()
         ac = 0
         for o in modelo.observables:
-            ac = ac + modelo.b[(sol[0][e],o)]
+            
+            ac = ac + modelo.b[(sol[0]
+                [e]
+                ,o)]
             if r < ac:
                 sol[1] = sol[1] + [o]
                 break
@@ -274,6 +277,7 @@ def  muestreo_hmm(modelo, n):
             ac = ac + modelo.a[(sol[0][e],es)]
             if r < ac:
                 sol[0] = sol[0] + [es]
+                
                 break
     return sol
 
@@ -432,6 +436,8 @@ class Robot(HMM):
                     if x + j >= 0 and  x + j< len(cuadrante) and cuadrante[x + j][y] != "x"] 
             s = s + [(x, y + i) for i in [1, -1]
                     if y + i < len(cuadrante[0]) and y + i >= 0 and cuadrante[x][y + i] != "x"] 
+            if s == []:
+                s = [(x,y)]
             return s
 
     
@@ -538,6 +544,14 @@ def compara_secuencias(seq1,seq2):
 # n, con varios valores de epsilon y con un m suficientemente grande para que 
 # la media devuelta sea significativa del rendimiento del algoritmo. 
 
+def experimento_hmm_robot(cuadricula,epsilon,n,m):
+    robot = Robot(cuadricula, epsilon)
+    puntuaciones = []
+    for i in range(m):
+        muestra = muestreo_hmm(robot, n)
+        estimacion = viterbi(robot, muestra[1])
+        comparacion = compara_secuencias(muestra[0], estimacion)
+        puntuaciones.append(comparacion)
+    return sum(puntuaciones)/m
 
-
-
+print(experimento_hmm_robot(cuadr_rn, 0.15, 7, 10))
