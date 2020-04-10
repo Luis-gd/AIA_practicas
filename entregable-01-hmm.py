@@ -171,8 +171,6 @@ def viterbi(modelo, observaciones):
     solucion = [modelo.estados[i] for i in indices]
     return solucion 
 
-
-
 #print(ej2_hmm.a)
 print(viterbi(ej2_hmm,["u","u","no u"]))
 
@@ -253,31 +251,34 @@ print(viterbi(ej2_hmm,["u","u","no u"]))
 def  muestreo_hmm(modelo, n): 
     r = random.random()
     ac = 0
-    for i in modelo.estados:
-        ac = ac + modelo.pi[i]
+    for e in modelo.estados:
+        ac = ac + modelo.pi[e]
         if r < ac:
-            sol =  [[i],[]]
+            sol = [[e], []]
+            break 
+    r = random.random()
+    ac = 0
+    for o in modelo.observables:
+        ac = ac + modelo.b[sol[0][0], o]
+        if r < ac:
+            sol[1].append(o)
             break
-    for e in range(n):
+
+    for i in range(1,n):
+        r = random.random()
+        ac = 0
+        for e in modelo.estados:
+            ac = ac + modelo.a[sol[0][i - 1],e]
+            if r < ac:
+                sol[0].append(e)
+                estado = e
+                break 
         r = random.random()
         ac = 0
         for o in modelo.observables:
-            
-            ac = ac + modelo.b[(sol[0]
-                [e]
-                ,o)]
+            ac = ac + modelo.b[estado, o]
             if r < ac:
-                sol[1] = sol[1] + [o]
-                break
-        if len(sol[1]) == n:
-            break
-        r = random.random()
-        ac = 0
-        for es in modelo.estados:
-            ac = ac + modelo.a[(sol[0][e],es)]
-            if r < ac:
-                sol[0] = sol[0] + [es]
-                
+                sol[1].append(o)
                 break
     return sol
 
@@ -548,10 +549,13 @@ def experimento_hmm_robot(cuadricula,epsilon,n,m):
     robot = Robot(cuadricula, epsilon)
     puntuaciones = []
     for i in range(m):
-        muestra = muestreo_hmm(robot, n)
+        muestra = muestreo_hmm(robot, 4)
         estimacion = viterbi(robot, muestra[1])
         comparacion = compara_secuencias(muestra[0], estimacion)
         puntuaciones.append(comparacion)
     return sum(puntuaciones)/m
 
-print(experimento_hmm_robot(cuadr_rn, 0.15, 7, 10))
+print(experimento_hmm_robot(cuadr_rn, 0.15, 5, 100))
+print(experimento_hmm_robot(cuadr_rn, 0.1, 10, 100))
+print(experimento_hmm_robot(cuadr_rn, 0.15, 15, 100))
+print(experimento_hmm_robot(cuadr_rn, 0.1, 20, 100))
